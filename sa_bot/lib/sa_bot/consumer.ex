@@ -7,9 +7,9 @@ defmodule SaBot.Consumer do
     Logger.info("Mensagem recebida: #{msg.content}")
 
     case msg.content do
-      "!sapo" ->
-        resposta = SaBot.Commands.imagem_sapo()
-        Logger.info("Respondendo com imagem de sapo")
+      "!cachorro" ->
+        resposta = SaBot.Commands.imagem_cachorro()
+        Logger.info("Respondendo com imagem de cachorro")
         Message.create(msg.channel_id, resposta)
 
       "!sapo_coach " <> nome ->
@@ -28,13 +28,38 @@ defmodule SaBot.Consumer do
         Message.create(msg.channel_id, "Memórias do Sapo:\n- " <> notas)
 
       "!clima " <> resto ->
-        case String.split(resto, " ") do
+        case String.split(resto) do
           [cidade, pais] ->
             resposta = SaBot.Commands.clima_brejo(cidade, pais)
             Logger.info("Consultando clima de #{cidade}, #{pais}")
             Message.create(msg.channel_id, resposta)
           _ ->
             Message.create(msg.channel_id, "Diga a cidade e o país (Ex: !clima Fortaleza BR)")
+        end
+
+      "!sapo_github " <> username ->
+        resposta = SaBot.Commands.sapo_github(username)
+        Logger.info("Buscando github de #{username}")
+        Message.create(msg.channel_id, resposta)
+
+      "!sapo_origem " <> nome ->
+        resposta = SaBot.Commands.sapo_origem(nome)
+        Logger.info("Buscando origem do nome #{nome}")
+        Message.create(msg.channel_id, resposta)
+
+      "!sapo_guardar_pokemon " <> pokemon ->
+        resposta = SaBot.Commands.sapo_guardar_pokemon(pokemon)
+        Logger.info("Guardando pokemon #{pokemon}")
+        Message.create(msg.channel_id, resposta)
+
+      "!sapo_moeda " <> resto ->
+        case String.split(resto) do
+          [valor, origem, destino] ->
+            resposta = SaBot.Commands.sapo_moeda(valor, origem, destino)
+            Logger.info("Convertendo moeda #{valor} #{origem} para #{destino}")
+            Message.create(msg.channel_id, resposta)
+          _ ->
+            Message.create(msg.channel_id, "Formato incorreto. Tente: !sapo_moeda 10 USD BRL")
         end
 
       _ ->
