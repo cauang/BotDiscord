@@ -1,6 +1,6 @@
 defmodule SaBot.Commands do
 
-  def clima_brejo(cidade, pais) do
+  def clima(cidade, pais) do
     busca = URI.encode("#{cidade},#{pais}")
     url = "https://wttr.in/#{busca}?format=j1"
 
@@ -8,8 +8,8 @@ defmodule SaBot.Commands do
       {:ok, %{status_code: 200, body: body}} ->
         data = Jason.decode!(body)
         temp = data["current_condition"] |> hd() |> Map.get("temp_C")
-        "Em #{cidade} faz #{temp}°C. Ótimo para um mergulho!"
-      _ -> "O sapo não achou essa cidade no mapa."
+        "Em #{cidade} faz #{temp}°C."
+      _ -> "Cidade não encontrada."
     end
   end
 
@@ -18,23 +18,23 @@ defmodule SaBot.Commands do
     Jason.decode!(response.body)["message"]
   end
 
-  def sapo_coach(nome) do
+  def conselho(nome) do
     {:ok, response} = HTTPoison.get("https://api.adviceslip.com/advice")
-    "Coach Sapo diz para #{nome}: " <> Jason.decode!(response.body)["slip"]["advice"]
+    "Conselho para #{nome}: " <> Jason.decode!(response.body)["slip"]["advice"]
   end
 
-  def sapo_github(username) do
+  def github(username) do
     url = "https://api.github.com/users/#{username}"
     case HTTPoison.get(url, [{"User-Agent", "SaBot"}]) do
       {:ok, %{status_code: 200, body: body}} ->
         data = Jason.decode!(body)
         repos = data["public_repos"]
-        "O usuário #{username} tem #{repos} repositórios públicos no GitHub!"
-      _ -> "O sapo não encontrou esse desenvolvedor no GitHub."
+        "O usuário #{username} tem #{repos} repositórios públicos no GitHub."
+      _ -> "Não foi possível encontrar esse desenvolvedor no GitHub."
     end
   end
 
-  def sapo_moeda(valor, origem, destino) do
+  def moeda(valor, origem, destino) do
     url = "https://open.er-api.com/v6/latest/#{String.upcase(origem)}"
     case HTTPoison.get(url) do
       {:ok, %{status_code: 200, body: body}} ->
@@ -45,18 +45,18 @@ defmodule SaBot.Commands do
           case Float.parse(valor) do
             {v, _} ->
               resultado = v * taxa
-              "Convertendo #{valor} #{String.upcase(origem)}, dá #{Float.round(resultado, 2)} #{String.upcase(destino)}!"
+              "Convertendo #{valor} #{String.upcase(origem)}, dá #{Float.round(resultado, 2)} #{String.upcase(destino)}."
             :error ->
               "O valor numérico '#{valor}' é inválido."
           end
         else
-          "O sapo não encontrou essa moeda de destino."
+          "Moeda de destino não encontrada."
         end
-      _ -> "O sapo se confundiu com essas moedas. Tente algo como: !sapo_moeda 10 USD BRL"
+      _ -> "Formato incorreto. Tente algo como: !moeda 10 USD BRL"
     end
   end
 
-  def sapo_origem(nome) do
+  def origem(nome) do
     url_nationalize = "https://api.nationalize.io/?name=#{nome}"
 
     with {:ok, %{status_code: 200, body: body1}} <- HTTPoison.get(url_nationalize),
@@ -66,23 +66,25 @@ defmodule SaBot.Commands do
          [country_data | _] <- Jason.decode!(body2),
          country_name <- country_data["name"]["common"] do
 
-      "O sapo jogou as runas e acha que o nome '#{nome}' vem do país:  #{country_name}!"
+      "A origem provável do nome '#{nome}' é do país: #{country_name}."
     else
-      _ -> "O sapo não conseguiu adivinhar a origem desse nome."
+      _ -> "Não foi possível adivinhar a origem desse nome."
     end
   end
 
-  def sapo_guardar_pokemon(nome) do
+  def guardar_pokemon(nome) do
     url = "https://pokeapi.co/api/v2/pokemon/#{String.downcase(nome)}"
     case HTTPoison.get(url) do
       {:ok, %{status_code: 200, body: body}} ->
         data = Jason.decode!(body)
         id = data["id"]
         nome_poke = data["name"]
+        imagem_url = data["sprites"]["front_default"]
+        
         texto = "Pokémon: #{String.capitalize(nome_poke)} (ID: #{id})"
-        SaBot.Store.salvar_nota(texto)
-        "O sapo encontrou e guardou o #{String.capitalize(nome_poke)} no brejo!"
-      _ -> "Esse Pokémon não existe na Pokédex do sapo."
+        SaBot.Store.salvar_pokemon(texto)
+        "Pokémon #{String.capitalize(nome_poke)} salvo com sucesso!\n#{imagem_url}"
+      _ -> "Pokémon não encontrado."
     end
   end
 end
